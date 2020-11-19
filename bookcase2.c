@@ -11,9 +11,35 @@ typedef enum bool bool;
 struct bookcase {
     char board[MAX][MAX];
     int parent;
+    int height;
+    int width;
 };
 
 typedef struct bookcase Bookcase;
+
+/* Function to make book move*/
+void make_move(Bookcase *child, int start, int end); 
+
+/*Function to check if a move is valid*/
+bool valid_move(char array[MAX][MAX] ,int start, int end);
+
+/* Function to map parent bookcase onto child bookcase*/
+void copy_bookcase(Bookcase *child, Bookcase *parent); 
+
+/* Testing function to fill parent bookcase*/
+void test_fill_case(Bookcase *bkcs);
+
+/* Function to check whether calloc has freed up space*/
+void *ncalloc(int n, size_t size);
+
+/*Function to remove a book from a shelf*/
+void remove_book(char array[MAX][MAX], int row, char book);
+
+/*Function to add a book to a shelf*/
+void add_book(char array[MAX][MAX], int row, char book);
+
+/*Function to find right most book of a row*/
+char find_book(char array[MAX][MAX], int row);
 
 /* Function to test if bookcase is happy*/
 bool is_happy(char array[MAX][MAX]);
@@ -55,6 +81,8 @@ void test(void) {
                                 {'.', '.', '.', '.', '.', '.', '.', '.', '.'}};
     char test_case2[MAX][MAX];
     int i;
+
+    Bookcase *cases;
 
 
     /*Test is_row_empty funtion*/
@@ -153,7 +181,231 @@ void test(void) {
     }
     assert(is_happy(test_case));
 
+    /*Test find_book function*/
+    test_case[0][1] = 'Y';
+    assert(find_book(test_case, 0) == 'Y');
+    test_case[0][2] = 'C';
+    assert(find_book(test_case, 0) == 'C');
+    test_case[0][3] = 'Y';
+    assert(find_book(test_case, 0) != 'C');
+    assert(find_book(test_case, 0) == 'Y');
+
+    for (i = 0; i < MAX; i++) {
+        test_case[0][i] = 'B';
+    }
+    assert(find_book(test_case, 0) == 'B');
+    test_case[0][8] = 'Y';
+    assert(find_book(test_case, 0) == 'Y');
+    for (i = 0; i < MAX; i++) {
+        test_case[0][i] = '.';
+    }
+    assert(find_book(test_case, 0) == '.');
+
+    /*Test add book function*/
+    add_book(test_case, 7, 'M');
+    assert(test_strings(test_case, 7, "M........"));
+    add_book(test_case, 7, 'C');
+    assert(test_strings(test_case, 7, "MC......."));  
+
+    for (i = 0; i< MAX; i++) {
+        test_case[7][i] = 'C';
+    }
+    /*Test whether fails to add to full book shelf*/
+    add_book(test_case, 7, 'M');
+    assert(test_strings(test_case, 7, "CCCCCCCCC"));
+
+    for (i = 0; i< MAX; i++) {
+        test_case[7][i] = '.';
+    }
+
+    /* Test remove_book function*/
+    test_case[4][4] = 'M';
+    remove_book(test_case, 4, 'M');
+    assert(test_strings(test_case, 4, "........."));
+
+    for (i = 0; i < MAX; i++) {
+        test_case[3][i] = 'G';
+    }
+    remove_book(test_case, 3, 'G');
+    assert(test_strings(test_case, 3, "GGGGGGGG."));
+
+    test_case[3][2] = 'B';
+    for (i = 0; i < MAX; i++) {
+        remove_book(test_case, 3, 'G');
+    }
+    assert(test_strings(test_case, 3, "..B......"));
+    test_case[3][2] = '.';
+
+    /* Test valid_move function*/
+    assert(!valid_move(test_case, 0, 1));
+    test_case[0][7] = 'C';
+    assert(valid_move(test_case, 0, 1));
+    test_case[1][7] = 'R';
+    assert(valid_move(test_case, 0, 1));
+    test_case[1][8] = 'R';
+    assert(!valid_move(test_case, 0, 1));
+    assert(!valid_move(test_case, 7, 7));
+
+    /* Calloc space for array of structures*/
+    cases = ncalloc(100000, sizeof(Bookcase));
+
+    /*Test test_fill_case function*/
+    test_fill_case(&cases[0]);
+    assert(cases[0].board[3][5] == '.');
+    assert(cases[0].board[8][8] == '.');
+    assert(cases[0].board[0][0] == '.');
+
+    /*Test copy_bookcase function*/
+    copy_bookcase(&cases[1], &cases[0]);
+    assert(cases[1].board[2][2] == '.');
+    assert(cases[1].board[7][4] == '.');
+    assert(cases[2].board[8][2] != '.');
+
+    cases[0].board[6][0] = 'R';
+    cases[0].board[6][1] = 'G';
+    cases[0].board[4][7] = 'Y';
+    copy_bookcase(&cases[1], &cases[0]);
+    assert(cases[1].board[6][0] == 'R');
+    assert(cases[1].board[6][1] == 'G');
+    assert(cases[2].board[4][7] != 'Y');
+    assert(cases[1].board[4][7] == 'Y');
+
+    /* Test make_move function*/
+    test_fill_case(&cases[0]);
+    cases[0].board[0][1] = 'C';
+    cases[0].board[0][2] = 'Y';
+    make_move(&cases[0], 0, 1);
+    assert(cases[0].board[1][0] == 'Y');
+    assert(cases[0].board[0][2] == '.');
+    make_move(&cases[0], 0, 1);
+    assert(cases[0].board[1][1] == 'C');
+    assert(cases[0].board[0][1] == '.');
+
+    cases[0].board[5][8] = 'R';
+    cases[0].board[4][8] = 'Y';
+    make_move(&cases[0], 5, 4);
+    
+
+    free(cases);
 }
+
+/*int make_children(Bookcase *parent, int endcase) {
+
+    int height = parent->height;
+    int y, x;
+
+    for (y = 0; y < height; y++) {
+        for (x = 0; x < height; x++) {
+
+            if (valid_move(parent->board, y, x)) {
+                copy_bookcase();
+                makemove();
+            }
+        }
+    }
+}*/
+
+void make_move(Bookcase *child, int start, int end) {
+
+    char book = find_book(child->board, start);
+
+    add_book(child->board, end, book);
+    remove_book(child->board, start, book); 
+}
+
+void copy_bookcase(Bookcase *child, Bookcase *parent) {
+
+    int y, x;
+
+    for (y = 0; y < MAX; y++) {
+        for (x = 0; x < MAX; x++) {
+
+            child->board[y][x] = parent->board[y][x];
+        }
+    }
+}
+
+void test_fill_case(Bookcase *bkcs) {
+
+    int y, x;
+
+    for (y = 0; y < MAX; y++) {
+        for (x = 0; x < MAX; x++) {
+
+            bkcs->board[y][x] = '.';
+        }
+    }    
+}
+
+void *ncalloc(int n, size_t size) {
+
+    void* v = calloc(n, size);
+
+    if (v == NULL) {
+        fprintf(stderr, "Cannot calloc space\n");
+    }
+
+    return v;
+}
+
+
+bool valid_move(char array[MAX][MAX] ,int start, int end) {
+
+    if (start == end) {
+        return false;
+    }
+
+    if (is_row_empty(array, start)) {
+        return false;
+    }
+    if (!is_space(array, end)){
+        return false;
+    }   
+
+    return true;
+}
+
+void remove_book(char array[MAX][MAX], int row, char book) {
+
+    int i;
+    bool state = false;
+
+    for (i = MAX-1; i >= 0; i--) {
+        if (array[row][i] == book && state == false) {
+            
+            array[row][i] = '.';
+            state = true;
+        }
+    }
+}
+
+void add_book(char array[MAX][MAX], int row, char book){
+
+    int i;
+    bool state = false;
+
+    for (i = 0; i < MAX; i++) {
+        if (array[row][i] == '.' && state == false) {
+            
+            array[row][i] = book;
+            state = true;
+        }
+    }
+}
+
+char find_book(char array[MAX][MAX], int row) {
+
+    char book = '.'; 
+    int i;
+
+    for (i = 0; i < MAX; i++) {
+        if (is_valid_letter(array[row][i])) {
+            book = array[row][i];
+        }
+    } 
+    return book;
+}
+
 
 bool is_happy(char array[MAX][MAX]) {
 
@@ -209,7 +461,7 @@ bool is_valid_letter(char a) {
 
 bool is_space(char array[MAX][MAX], int row) {
 
-    if (row >= 9 || row < 0) {
+    if (row >= MAX || row < 0) {
         fprintf(stderr, "Row invalid, please pick another\n");
         exit(EXIT_FAILURE);
     }
