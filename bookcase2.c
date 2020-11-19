@@ -4,6 +4,7 @@
 #include <string.h>
 
 #define MAX 9
+#define MAXIMUM 99999
 
 enum bool {false, true};
 typedef enum bool bool;
@@ -11,6 +12,7 @@ typedef enum bool bool;
 struct bookcase {
     char board[MAX][MAX];
     int parent;
+    int number;
     int height;
     int width;
 };
@@ -20,8 +22,14 @@ typedef struct bookcase Bookcase;
 /* Function to make book move*/
 void make_move(Bookcase *child, int start, int end); 
 
+/*Function to get parent*/
+void get_parent(Bookcase *child, Bookcase *parent); 
+
 /*Function to check if a move is valid*/
 bool valid_move(char array[MAX][MAX] ,int start, int end);
+
+/* Function to assign structure an array number*/
+void fill_number(Bookcase cases[MAXIMUM]);
 
 /* Function to map parent bookcase onto child bookcase*/
 void copy_bookcase(Bookcase *child, Bookcase *parent); 
@@ -33,10 +41,10 @@ void test_fill_case(Bookcase *bkcs);
 void *ncalloc(int n, size_t size);
 
 /*Function to remove a book from a shelf*/
-void remove_book(char array[MAX][MAX], int row, char book);
+bool remove_book(char array[MAX][MAX], int row, char book);
 
 /*Function to add a book to a shelf*/
-void add_book(char array[MAX][MAX], int row, char book);
+bool add_book(char array[MAX][MAX], int row, char book);
 
 /*Function to find right most book of a row*/
 char find_book(char array[MAX][MAX], int row);
@@ -44,17 +52,23 @@ char find_book(char array[MAX][MAX], int row);
 /* Function to test if bookcase is happy*/
 bool is_happy(char array[MAX][MAX]);
 
+/*Function to check whether first book of each row is different*/
+bool books_in_rows(char array[MAX][MAX]);
+
 /* Function to determine if a row is happy*/
 bool is_row_happy(char array[MAX][MAX], int row); 
 
 /* Function to check whether letter is valid*/
 bool is_valid_letter(char a);
 
+/* Function used to clean testing array*/
+void test_clean_shelf(char array[MAX][MAX]);
+
 /*Function to check whether there is space in the row*/
 bool is_space(char array[MAX][MAX], int row);
 
 /*Function to check whether a row is empty*/
-bool is_row_empty(char array[MAX][MAX], int row);
+bool is_row_empty(char array[MAX][MAX], int row, int width);
 
 /* Function used for testing*/
 bool test_strings(char array[MAX][MAX], int row, char str[10]);
@@ -87,7 +101,7 @@ void test(void) {
 
     /*Test is_row_empty funtion*/
     for (i = 0; i < MAX; i++) {
-        assert(is_row_empty(test_case, i));
+        assert(is_row_empty(test_case, i, MAX));
         assert(test_strings(test_case, i, "........."));
     }
 
@@ -159,6 +173,19 @@ void test(void) {
     test_case[0][2] = '.';
     assert(is_row_happy(test_case, 0));
 
+    /*Test books_in_rows function*/
+    assert(books_in_rows(test_case));
+    test_case[0][0] = 'Y';
+    test_case[1][0] = 'R';
+    test_case[2][0] = 'G';
+    test_case[3][0] = 'B';
+    test_case[4][0] = 'C';
+    assert(books_in_rows(test_case));
+    test_case[4][0] = 'Y';
+    assert(!books_in_rows(test_case));
+    test_clean_shelf(test_case);
+    
+
     /*Test if is_happy function*/
     assert(is_happy(test_case));
     test_case[8][8] = 'Y';
@@ -180,6 +207,13 @@ void test(void) {
         test_case[3][i] = '.';
     }
     assert(is_happy(test_case));
+
+    for (i = 0; i < MAX; i++) {
+        test_case[8][i] = 'Y';
+        test_case[2][i] = 'Y';
+    }
+    assert(!is_happy(test_case));
+    
 
     /*Test find_book function*/
     test_case[0][1] = 'Y';
@@ -207,16 +241,14 @@ void test(void) {
     add_book(test_case, 7, 'C');
     assert(test_strings(test_case, 7, "MC......."));  
 
+    /*Test whether fails to add to full book shelf*/
     for (i = 0; i< MAX; i++) {
         test_case[7][i] = 'C';
     }
-    /*Test whether fails to add to full book shelf*/
     add_book(test_case, 7, 'M');
+    assert(!add_book(test_case, 7, 'M'));
     assert(test_strings(test_case, 7, "CCCCCCCCC"));
-
-    for (i = 0; i< MAX; i++) {
-        test_case[7][i] = '.';
-    }
+    test_clean_shelf(test_case);
 
     /* Test remove_book function*/
     test_case[4][4] = 'M';
@@ -234,7 +266,7 @@ void test(void) {
         remove_book(test_case, 3, 'G');
     }
     assert(test_strings(test_case, 3, "..B......"));
-    test_case[3][2] = '.';
+    test_clean_shelf(test_case);
 
     /* Test valid_move function*/
     assert(!valid_move(test_case, 0, 1));
@@ -245,9 +277,10 @@ void test(void) {
     test_case[1][8] = 'R';
     assert(!valid_move(test_case, 0, 1));
     assert(!valid_move(test_case, 7, 7));
+    test_clean_shelf(test_case);
 
     /* Calloc space for array of structures*/
-    cases = ncalloc(100000, sizeof(Bookcase));
+    cases = ncalloc(MAXIMUM, sizeof(Bookcase));
 
     /*Test test_fill_case function*/
     test_fill_case(&cases[0]);
@@ -282,9 +315,26 @@ void test(void) {
     assert(cases[0].board[0][1] == '.');
 
     cases[0].board[5][8] = 'R';
-    cases[0].board[4][8] = 'Y';
+    for (i = 0; i < MAX; i++) {
+        cases[0].board[4][i] = 'Y';
+    }
     make_move(&cases[0], 5, 4);
-    
+    assert(cases[0].board[5][8] == 'R');
+    assert(cases[0].board[4][8] == 'Y');
+
+    /*Test fill_number function*/
+    fill_number(cases);
+    assert(cases[0].number   ==   0);
+    assert(cases[45].number  ==  45);
+    assert(cases[967].number == 967);
+
+    /* Test get_parent*/
+    get_parent(&cases[34], &cases[45]);
+    assert(cases[34].parent == 45);
+    get_parent(&cases[98], &cases[103]);
+    assert(cases[98].parent == 103);
+    get_parent(&cases[7], &cases[967]);
+    assert(cases[7].parent == 967);
 
     free(cases);
 }
@@ -299,6 +349,7 @@ void test(void) {
 
             if (valid_move(parent->board, y, x)) {
                 copy_bookcase();
+                get_parent();
                 makemove();
             }
         }
@@ -309,8 +360,24 @@ void make_move(Bookcase *child, int start, int end) {
 
     char book = find_book(child->board, start);
 
-    add_book(child->board, end, book);
-    remove_book(child->board, start, book); 
+    if (add_book(child->board, end, book)) {
+        remove_book(child->board, start, book);
+    } 
+}
+
+void get_parent(Bookcase *child, Bookcase *parent) {
+
+    child->parent = parent->number;
+
+}
+
+void fill_number(Bookcase cases[MAXIMUM]) {
+
+    int i;
+
+    for (i = 0; i < MAXIMUM; i++) {
+        cases[i].number = i; 
+    }
 }
 
 void copy_bookcase(Bookcase *child, Bookcase *parent) {
@@ -365,32 +432,32 @@ bool valid_move(char array[MAX][MAX] ,int start, int end) {
     return true;
 }
 
-void remove_book(char array[MAX][MAX], int row, char book) {
+bool remove_book(char array[MAX][MAX], int row, char book) {
 
     int i;
-    bool state = false;
 
     for (i = MAX-1; i >= 0; i--) {
-        if (array[row][i] == book && state == false) {
+        if (array[row][i] == book) {
             
             array[row][i] = '.';
-            state = true;
+            return true;
         }
     }
+    return false;
 }
 
-void add_book(char array[MAX][MAX], int row, char book){
+bool add_book(char array[MAX][MAX], int row, char book){
 
     int i;
-    bool state = false;
 
     for (i = 0; i < MAX; i++) {
-        if (array[row][i] == '.' && state == false) {
+        if (array[row][i] == '.') {
             
             array[row][i] = book;
-            state = true;
+            return true;
         }
     }
+    return false;
 }
 
 char find_book(char array[MAX][MAX], int row) {
@@ -417,7 +484,29 @@ bool is_happy(char array[MAX][MAX]) {
         }
         y++;
     }
+    
+    if (!books_in_rows(array)) {
+        return false;
+    }
 
+    return true;
+}
+
+bool books_in_rows(char array[MAX][MAX]) {
+
+    int x, y;
+    
+    for (y = 0; y < MAX; y++) {
+        for (x = y+1; x < MAX; x++) {
+
+            if (is_valid_letter(array[y][0]) && is_valid_letter(array[x][0])) {
+
+                if (array[y][0] == array[x][0]) {
+                    return false;
+                }
+            } 
+        }
+    }
     return true;
 }
 
@@ -459,6 +548,18 @@ bool is_valid_letter(char a) {
     }
 }
 
+void test_clean_shelf(char array[MAX][MAX]){
+
+    int y, x;
+
+    for (y = 0; y < MAX; y++) {
+        for (x = 0; x < MAX; x++) {
+
+            array[y][x] = '.';
+        }
+    }
+}
+
 bool is_space(char array[MAX][MAX], int row) {
 
     if (row >= MAX || row < 0) {
@@ -473,21 +574,20 @@ bool is_space(char array[MAX][MAX], int row) {
 }
 
 
-bool is_row_empty(char array[MAX][MAX], int row) {
+bool is_row_empty(char array[MAX][MAX], int row, int width) {
 
     int x;
 
-    if (row >= 9 || row < 0) {
+    if (row >= width || row < 0) {
         fprintf(stderr, "Row invalid, please pick another\n");
         exit(EXIT_FAILURE);
     }
 
-    for (x = 0; x < MAX; x++) {
+    for (x = 0; x < width; x++) {
         if (array[row][x] != '.') {
             return false;
         }
     }
-    
     return true;
 }
 
