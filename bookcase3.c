@@ -4,7 +4,7 @@
 #include <string.h>
 
 #define MAX 9
-#define MAXIMUM 99999
+#define MAXIMUM 9999999
 
 enum bool {false, true};
 typedef enum bool bool;
@@ -451,7 +451,7 @@ void test(void) {
     cases[0].board[1][0] = 'C';
     cases[0].board[2][0] = 'C';
     cases[0].board[2][1] = 'M';
-    assert(find_happy_bookcase(cases) == 0);
+    assert(find_happy_bookcase(cases) == -1);
 
     cases[0].height = 3;
     cases[0].width  = 3; 
@@ -487,6 +487,17 @@ void test(void) {
     cases[0].board[3][0] = 'K';
     make_children(cases, &cases[0], 0);
     assert(find_happy_bookcase(cases) == 3);
+
+    test_clean_case(&cases[0]);
+    cases[0].height = 5;
+    cases[0].width  = 3; 
+    cases[0].board[0][0] = 'C';
+    cases[0].board[1][0] = 'B';
+    cases[0].board[2][0] = 'K';
+    cases[0].board[3][0] = 'Y';
+    cases[0].board[4][0] = 'W';
+    cases[0].board[4][1] = 'W';
+    assert(find_happy_bookcase(cases) == 0);
 
     /* Test find_solutions function*/
     for (i = 0; i < 100; i++) {
@@ -524,14 +535,66 @@ void test(void) {
     assert(find_solution(cases, 0, 0) == 1);
 
     /*Test find_parents function*/
+    test_clean_case(&cases[0]);
+    cases[0].height = 2;
+    cases[0].width  = 2; 
+    cases[0].board[0][0] = 'Y';
+    cases[0].board[0][1] = '.';
+    cases[0].board[1][0] = 'B';
+    cases[0].board[1][1] = 'Y';
     solution = find_solution(cases, 0, 0);
     assert(find_parents(cases, solution) == 2);
+
+    test_clean_case(&cases[0]);
+    cases[0].height = 3;
+    cases[0].width  = 3; 
+    cases[0].board[0][0] = 'Y';
+    cases[0].board[1][0] = 'G';
+    cases[0].board[2][0] = 'Y';
+    cases[0].board[2][1] = '.';
+    solution = find_solution(cases, 0, 0);
+    assert(find_parents(cases, solution) == 2);
+
+   
+    for (i = 0; i < 1000; i++) {
+        test_clean_case(&cases[i]);
+    }
+    cases[0].height = 5;
+    cases[0].width  = 3; 
+    cases[0].board[0][0] = 'C';
+    cases[0].board[1][0] = 'B';
+    cases[0].board[2][0] = 'K';
+    cases[0].board[3][0] = 'Y';
+    cases[0].board[4][0] = 'W';
+    cases[0].board[4][1] = 'W';
+    solution = find_solution(cases, 0, 0);
+    assert(find_parents(cases, solution) == 1);
 
 
 
     free(cases);
 }
 
+void print_bookcases(Bookcase bkcs[MAXIMUM], int solution) {
+
+    int y, x;
+    int height = bkcs[0].height;
+    int width = bkcs[0].width;
+    int parent = solution;
+
+    do {
+
+        for (y = 0; y < height; y++) {
+            printf("\n");
+            for (x = 0; x < width; x++) {
+                printf("%c", bkcs.board[y][x]);
+            }
+        }
+        printf("\n");
+
+    } while (parent != 0)
+
+}
 
 void print_bookcase(Bookcase bkcs){
 
@@ -563,6 +626,10 @@ int find_parents(Bookcase array[MAXIMUM], int solution) {
 
 int find_solution(Bookcase array[MAXIMUM], int parent, int endpoint) {  
 
+    if (find_happy_bookcase(array) == 0) {
+        return 0;
+    }
+
     do {
         /*No Solution Condition*/
         if (endpoint > 900000) {
@@ -589,7 +656,7 @@ int find_happy_bookcase(Bookcase array[MAXIMUM]) {
             }      
         i++;
     }
-    return 0; 
+    return -1; 
 }
 
 int make_children(Bookcase array[MAXIMUM], Bookcase *parent, int endcase) {
