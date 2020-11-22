@@ -6,6 +6,7 @@
 #define MAX 9
 #define MAXIMUM 999999
 #define SCALEFACTOR 2
+#define NOTHAPPY -1
 
 enum bool {false, true};
 typedef enum bool bool;
@@ -20,6 +21,10 @@ struct bookcase {
 
 typedef struct bookcase Bookcase;
 
+/* Function to print out the parent bookcases*/
+void print_bookcases(Bookcase *cases, int solution);
+
+/*Function to print a bookcase*/
 void print_bookcase(Bookcase bkcs);
 
 /*Function to find the number of bookcases that would be printed in solution*/
@@ -38,7 +43,7 @@ Bookcase* check_shelf(Bookcase *cases, int endshelf);
 int find_endshelf(Bookcase *cases);
 
 /*Function to make children bookcases*/
-int make_children(Bookcase *cases, int parent);
+Bookcase* make_children(Bookcase *cases, int parent);
 
 /* Function to make book move*/
 void make_move(Bookcase *child, int start, int end, int width); 
@@ -50,7 +55,7 @@ void get_info(Bookcase *child, Bookcase *parent);
 bool valid_move(char array[MAX][MAX] ,int start, int end, int height, int width);
 
 /* Function to assign structure an array number*/
-void fill_number(Bookcase cases[MAXIMUM]);
+void fill_number(Bookcase cases[MAXIMUM], int number);
 
 /* Function to map parent bookcase onto child bookcase*/
 void copy_bookcase(Bookcase *child, Bookcase *parent); 
@@ -361,7 +366,7 @@ void test(void) {
     assert(cases[0].board[4][8] == 'Y');
 
     /*Test fill_number function*/
-    fill_number(cases);
+    fill_number(cases, MAXIMUM);
     assert(cases[0].number   ==   0);
     assert(cases[45].number  ==  45);
     assert(cases[432].number == 432);
@@ -530,19 +535,20 @@ void test(void) {
     cases[MAXIMUM -8].board[0][2] = 'Y';
     cases[MAXIMUM -8].board[1][0] = 'M';
     cases[MAXIMUM -8].board[2][0] = 'Y';
-    make_children(cases, MAXIMUM -8);
+    cases = make_children(cases, MAXIMUM -8);
 
-  
 
-    /*Test find_happy_bookcase function
+    /*Test find_happy_bookcase function*/
     for (i = 0; i < 100; i++) {
         test_clean_case(&cases[i]);
     }
+    cases[0].height = 3;
+    cases[0].width  = 3; 
     cases[0].board[0][0] = 'Y';
     cases[0].board[1][0] = 'C';
     cases[0].board[2][0] = 'C';
     cases[0].board[2][1] = 'M';
-    assert(find_happy_bookcase(cases) == 0);
+    assert(find_happy_bookcase(cases) == NOTHAPPY);
 
     cases[0].height = 3;
     cases[0].width  = 3; 
@@ -550,10 +556,12 @@ void test(void) {
     cases[0].board[1][0] = 'G';
     cases[0].board[2][0] = 'Y';
     cases[0].board[2][1] = '.';
-    make_children(cases, &cases[0], 0);
+    cases = make_children(cases, 0);
     assert(find_happy_bookcase(cases) == 2);
 
-    test_clean_case(&cases[0]);
+    for (i = 0; i < 10000; i++) {
+        test_clean_case(&cases[i]);
+    }
     cases[0].height = 8;
     cases[0].width  = 4; 
     cases[0].board[0][0] = 'B';
@@ -564,10 +572,13 @@ void test(void) {
     cases[0].board[5][0] = 'W';
     cases[0].board[6][0] = 'K';
     cases[0].board[7][0] = 'G';
-    make_children(cases, &cases[0], 0);
+    cases = make_children(cases, 0);
     assert(find_happy_bookcase(cases) == 20);
+    
 
-    test_clean_case(&cases[0]);
+    for (i = 0; i < 10000; i++) {
+        test_clean_case(&cases[i]);
+    }
     cases[0].height = 5;
     cases[0].width  = 3; 
     cases[0].board[0][0] = 'B';
@@ -576,13 +587,26 @@ void test(void) {
     cases[0].board[1][0] = 'Y';
     cases[0].board[2][0] = 'W';
     cases[0].board[3][0] = 'K';
-    make_children(cases, &cases[0], 0);
-    assert(find_happy_bookcase(cases) == 3);*/
+    cases = make_children(cases, 0);
+    assert(find_happy_bookcase(cases) == 3);
 
+    for (i = 0; i < 10000; i++) {
+        test_clean_case(&cases[i]);
+    }
+    cases[0].height = 3;
+    cases[0].width  = 3; 
+    cases[0].board[0][0] = 'B';
+    cases[0].board[0][1] = 'B';
+    cases[0].board[0][2] = 'K';
+    cases[0].board[1][0] = 'Y';
+    cases[0].board[2][0] = 'W';
+    cases[0].board[2][1] = 'K';
+    cases[0].board[2][2] = 'C';
+    cases = make_children(cases, 0);
+    assert(find_happy_bookcase(cases) == NOTHAPPY);
 
-
-    /* Test find_solutions function
-    for (i = 0; i < 100; i++) {
+    /* Test find_solutions function*/
+    for (i = 0; i < 10000; i++) {
         test_clean_case(&cases[i]);
     }
     cases[0].height = 3;
@@ -593,7 +617,9 @@ void test(void) {
     cases[0].board[2][1] = '.';
     assert(find_solution(cases) == 2);
 
-    test_clean_case(&cases[0]);
+    for (i = 0; i < 10000; i++) {
+        test_clean_case(&cases[i]);
+    }
     cases[0].height = 7;
     cases[0].width  = 6; 
     cases[0].board[0][0] = 'C';
@@ -604,7 +630,7 @@ void test(void) {
     cases[0].board[5][0] = 'W';
     assert(find_solution(cases) == 29);
 
-    for (i = 0; i < 1000; i++) {
+    for (i = 0; i < 10000; i++) {
         test_clean_case(&cases[i]);
     }
     cases[0].height = 2;
@@ -613,16 +639,76 @@ void test(void) {
     cases[0].board[0][1] = '.';
     cases[0].board[1][0] = 'B';
     cases[0].board[1][1] = 'Y';
-
     assert(find_solution(cases) == 1);
 
-    Test find_parents function
+    for (i = 0; i < 10000; i++) {
+        test_clean_case(&cases[i]);
+    }
+    cases[0].height = 4;
+    cases[0].width  = 2; 
+    cases[0].board[0][0] = 'C';
+    cases[0].board[0][1] = 'B';
+    cases[0].board[1][0] = 'B';
+    cases[0].board[1][1] = 'C';
+    cases[0].board[2][0] = 'Y';
+    cases[0].board[2][1] = 'Y';
+    cases[0].board[3][0] = 'M';
+    assert(find_solution(cases) != NOTHAPPY);
+
+    
+    /*Test find_parents function*/
+    for (i = 0; i < 999998; i++) {
+        test_clean_case(&cases[i]);
+    }
+    cases[0].height = 3;
+    cases[0].width  = 3; 
+    cases[0].board[0][0] = 'Y';
+    cases[0].board[1][0] = 'B';
+    cases[0].board[1][1] = 'B';
+    cases[0].board[1][2] = 'Y';
+    cases[0].board[2][0] = 'Y';
+    cases[0].board[2][1] = 'B';
+
     solution = find_solution(cases);
-    assert(find_parents(cases, solution) == 2);*/
+    assert(find_parents(cases, solution) == 4);
 
+    for (i = 0; i < 999998; i++) {
+        test_clean_case(&cases[i]);
+    }
+    cases[0].height = 2;
+    cases[0].width  = 2; 
+    cases[0].board[0][0] = 'Y';
+    cases[0].board[1][0] = 'B';
+    cases[0].board[1][1] = 'Y';
 
+    solution = find_solution(cases);
+    assert(find_parents(cases, solution) == 2);
+    
+    for (i = 0; i < 999998; i++) {
+        test_clean_case(&cases[i]);
+    }
+    cases[0].height = 2;
+    cases[0].width  = 3; 
+    cases[0].board[0][0] = 'C';
+    cases[0].board[0][1] = 'C';
+    cases[0].board[1][0] = 'B';
+    cases[0].board[1][1] = 'B';
 
-    /*free(cases);*/
+    solution = find_solution(cases);
+    assert(find_parents(cases, solution) == 1);
+
+    free(cases);
+}
+
+void print_bookcases(Bookcase *cases, int solution) {
+
+    int parent = solution;
+
+    while (parent != 0) {
+        print_bookcase(cases[parent]);
+        parent = cases[parent].parent;
+    } 
+    print_bookcase(cases[0]);
 }
 
 
@@ -656,30 +742,28 @@ int find_parents(Bookcase array[MAXIMUM], int solution) {
 
 int find_solution(Bookcase *cases) {  
 
-    int endshelf = 0;
-    int parent = 0;
+    int endshelf = 0, parent = 0;
 
     if (find_happy_bookcase(cases) == 0) {
         return 0;
     }
 
     do {
+        endshelf = find_endshelf(cases);
+
         /*No Solution Condition*/
         if (endshelf > 900000) {
             printf("No Solution?\n");
             return 0;
         }
-        endshelf = make_children(cases, parent);
+        cases = make_children(cases, parent);
         parent++;
-        printf("Endpoint is %d\n", endshelf);
-
-    } while (find_happy_bookcase(cases) == 0);
+    } while (find_happy_bookcase(cases) == NOTHAPPY);
 
     return find_happy_bookcase(cases);
 }
 
 int find_happy_bookcase(Bookcase array[MAXIMUM]) {
-
 
     int i = 0;
     int height = array[0].height;
@@ -692,7 +776,7 @@ int find_happy_bookcase(Bookcase array[MAXIMUM]) {
             }      
         i++;
     }
-    return 0; 
+    return NOTHAPPY; 
 }
 
 Bookcase* check_shelf(Bookcase *cases, int endshelf) {
@@ -701,6 +785,7 @@ Bookcase* check_shelf(Bookcase *cases, int endshelf) {
 
     if (endshelf == capacity) {
         cases = (Bookcase*) realloc(cases, sizeof(Bookcase)*(MAXIMUM*SCALEFACTOR));
+        fill_number(cases, SCALEFACTOR*(capacity+1));
         capacity = capacity*SCALEFACTOR; 
 
         if (cases == NULL) {
@@ -723,7 +808,7 @@ int find_endshelf(Bookcase *cases) {
     return num;
 }
 
-int make_children(Bookcase *cases, int parent) {
+Bookcase* make_children(Bookcase *cases, int parent) {
 
     int height = cases[parent].height;
     int width = cases[parent].width;
@@ -743,7 +828,7 @@ int make_children(Bookcase *cases, int parent) {
             }
         }
     }
-    return endshelf;
+    return cases;
 }
 
 void make_move(Bookcase *child, int start, int end, int width) {
@@ -762,11 +847,12 @@ void get_info(Bookcase *child, Bookcase *parent) {
     child->width  = parent->width;
 }
 
-void fill_number(Bookcase cases[MAXIMUM]) {
+void fill_number(Bookcase cases[MAXIMUM], int number) {
 
     int i;
-
-    for (i = 0; i < MAXIMUM; i++) {
+    
+    
+    for (i = 0; i < number; i++) {
         cases[i].number = i; 
     }
 }
