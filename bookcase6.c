@@ -1000,7 +1000,6 @@ int find_solution(Bookcase *cases) {
 
     do {
         endshelf = find_endshelf(cases);
-
         /*No Solution Condition*/
         if (endshelf > 900000) {
             printf("No Solution?\n");
