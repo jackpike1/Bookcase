@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #define MAX 9
 #define MAXIMUM 999999
@@ -20,6 +21,12 @@ struct bookcase {
 };
 
 typedef struct bookcase Bookcase;
+
+/* Function to change letters in file to uppercase*/
+void uppercase(Bookcase *bkcs); 
+
+/* Function to read in a file*/
+void readfile(Bookcase *bkcs, char **argv); 
 
 /* Function to print out the parent bookcases*/
 void print_bookcases(Bookcase *cases, int solution);
@@ -101,10 +108,32 @@ bool test_strings(char array[MAX][MAX], int row, char str[10]);
 
 void test(void);
 
-int main(void) {
+int main(int argc, char **argv) {
+
+    Bookcase *cases;
+    int num, happy_bkcs;
 
     test();
 
+    cases = ncalloc(MAXIMUM, sizeof(Bookcase));
+    fill_number(cases, MAXIMUM);
+    readfile(&cases[0], argv);
+    uppercase(&cases[0]);
+
+    if (argc == 2) {
+        happy_bkcs = find_solution(cases);
+        num = find_parents(cases, happy_bkcs);
+        printf("%d\n", num);
+    }
+
+    if (argc == 3 && strcmp(argv[2], "verbose") == 0) {
+        happy_bkcs = find_solution(cases);
+        num = find_parents(cases, happy_bkcs);
+        printf("%d\n", num);
+        print_bookcases(cases, happy_bkcs);
+    }
+
+    free(cases);
     return 0;
 }
 
@@ -710,8 +739,62 @@ void test(void) {
     solution = find_solution(cases);
     assert(find_parents(cases, solution) == 1);
 
+    /*Test uppercase function*/
+    cases[0].board[0][0] = 'y';
+    cases[0].board[1][0] = 'r';
+    cases[0].board[2][0] = 'g';
+    cases[0].board[3][0] = 'b';
+    cases[0].board[4][0] = 'c';
+    uppercase(&cases[0]);
+    assert(cases[0].board[0][0] == 'Y');
+    assert(cases[0].board[1][0] == 'R');
+    assert(cases[0].board[2][0] == 'G');
+    assert(cases[0].board[3][0] == 'B');
+    assert(cases[0].board[4][0] != 'c');
+
     free(cases);
 }
+
+void uppercase(Bookcase *bkcs) {
+
+    int y, x;
+
+    for (y = 0; y < MAX; y++) {
+        for (x = 0; x < MAX; x++) {
+
+            bkcs->board[y][x] = toupper(bkcs->board[y][x]);
+        }
+    }
+}
+
+void readfile(Bookcase *bkcs, char **argv) {
+
+    FILE *fb;
+    char str[MAX] = {0};
+    int height, width, i = 0;
+
+    if ((fb = fopen(argv[1], "r")) == NULL) {
+        fprintf(stderr, "Cannot open file. Have you typed it in correctly?\n");
+        exit(EXIT_FAILURE);
+    }
+
+    if (fgets(str, MAX, fb) != NULL) {
+        if (sscanf(str, "%d %d", &height, &width) != 2) {
+            fprintf(stderr, "Cannot scan height and width\n");
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    bkcs->height = height;
+    bkcs->width = width;
+
+    while (fgets(str, MAX, fb) != NULL) {
+        strcpy(bkcs->board[i++], str);
+    }
+
+    fclose(fb);    
+}
+
 
 void print_bookcases(Bookcase *cases, int solution) {
 
