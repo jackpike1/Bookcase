@@ -8,6 +8,7 @@
 #define MAXIMUM 999999
 #define SCALEFACTOR 2
 #define NOTHAPPY -1
+#define COLOURS 8
 
 enum bool {false, true};
 typedef enum bool bool;
@@ -22,8 +23,8 @@ struct bookcase {
 
 typedef struct bookcase Bookcase;
 
-/* Function to change letters in file to uppercase*/
-void uppercase(Bookcase *bkcs); 
+/*Function to check user has inputted arguments correctly*/
+void check_args(int argc, char **argv);
 
 /* Function to read in a file*/
 void readfile(Bookcase *bkcs, char **argv); 
@@ -34,8 +35,17 @@ void print_bookcases(Bookcase *cases, int solution);
 /*Function to print a bookcase*/
 void print_bookcase(Bookcase bkcs);
 
+/*Function to check if bookcase has more books than rows*/ 
+bool viable_bookcase(Bookcase *bkcs);
+
+/*Function to count the number of book colours in a case*/
+int count_books(Bookcase *bkcs);
+
+/* Function to change letters in file to uppercase*/
+void uppercase(Bookcase *bkcs); 
+
 /*Function to find the number of bookcases that would be printed in solution*/
-int find_parents(Bookcase array[MAXIMUM], int solution);
+int find_parents(Bookcase *cases, int solution);
 
 /* Function to generate children until a happy bookcase is found*/
 int find_solution(Bookcase *cases);
@@ -111,25 +121,31 @@ void test(void);
 int main(int argc, char **argv) {
 
     Bookcase *cases;
-    int num, happy_bkcs;
-
+    int parents, happy_bkcs;
+    
+    check_args(argc, argv);
     test();
-
+    
     cases = ncalloc(MAXIMUM, sizeof(Bookcase));
     fill_number(cases, MAXIMUM);
     readfile(&cases[0], argv);
     uppercase(&cases[0]);
 
-    if (argc == 2) {
-        happy_bkcs = find_solution(cases);
-        num = find_parents(cases, happy_bkcs);
-        printf("%d\n", num);
+    if (!viable_bookcase(&cases[0])) {
+        fprintf(stderr, "No Solution?\n");
+        exit(EXIT_FAILURE);
     }
 
-    if (argc == 3 && strcmp(argv[2], "verbose") == 0) {
+    if (argc == 2) {
         happy_bkcs = find_solution(cases);
-        num = find_parents(cases, happy_bkcs);
-        printf("%d\n", num);
+        parents = find_parents(cases, happy_bkcs);
+        printf("%d\n", parents);
+    }
+
+    if (argc == 3) {
+        happy_bkcs = find_solution(cases);
+        parents = find_parents(cases, happy_bkcs);
+        printf("%d\n", parents);
         print_bookcases(cases, happy_bkcs);
     }
 
@@ -752,18 +768,81 @@ void test(void) {
     assert(cases[0].board[3][0] == 'B');
     assert(cases[0].board[4][0] != 'c');
 
+    /*Test count_books*/
+    test_clean_case(&cases[0]);
+    cases[0].height = 5;
+    cases[0].width  = 5; 
+    cases[0].board[0][0] = 'Y';
+    cases[0].board[1][0] = 'R';
+    cases[0].board[2][0] = 'W';
+    cases[0].board[3][0] = 'K';
+    cases[0].board[4][0] = 'C';
+    assert(count_books(&cases[0]) == 5);
+
+    test_clean_case(&cases[0]);
+    assert(count_books(&cases[0]) == 0);
+
+    test_clean_case(&cases[0]);
+    cases[0].height = 7;
+    cases[0].width  = 6; 
+    cases[0].board[0][0] = 'C';
+    cases[0].board[1][0] = 'B';
+    cases[0].board[2][0] = 'K';
+    cases[0].board[3][0] = 'Y';
+    cases[0].board[4][0] = 'M';
+    cases[0].board[5][0] = 'W';
+    assert(count_books(&cases[0]) == 6);
+
+    test_clean_case(&cases[0]);
+    cases[0].height = 3;
+    cases[0].width  = 3; 
+    cases[0].board[0][0] = 'Y';
+    cases[0].board[1][0] = 'Y';
+    cases[0].board[2][0] = 'Y';
+    cases[0].board[2][2] = 'Y';
+    assert(count_books(&cases[0]) == 1);
+
+    /*Test viable_bookcase function*/
+    test_clean_case(&cases[0]);
+    cases[0].height = 3;
+    cases[0].width  = 3; 
+    cases[0].board[0][0] = 'Y';
+    cases[0].board[0][1] = 'R';
+    cases[0].board[1][0] = 'W';
+    cases[0].board[1][2] = 'K';
+    cases[0].board[2][0] = 'C';
+    assert(viable_bookcase(&cases[0]) == false);
+
+    test_clean_case(&cases[0]);
+    cases[0].height = 7;
+    cases[0].width  = 6; 
+    cases[0].board[0][0] = 'C';
+    cases[0].board[1][0] = 'B';
+    cases[0].board[2][0] = 'K';
+    cases[0].board[3][0] = 'Y';
+    cases[0].board[4][0] = 'M';
+    cases[0].board[5][0] = 'W';
+    assert(viable_bookcase(&cases[0]) == true);
+
+    test_clean_case(&cases[0]);
+    cases[0].height = 2;
+    cases[0].width  = 3; 
+    cases[0].board[0][0] = 'C';
+    cases[0].board[0][1] = 'C';
+    cases[0].board[1][0] = 'B';
+    cases[0].board[1][1] = 'B';
+    assert(viable_bookcase(&cases[0]) == true);
+
     free(cases);
 }
 
-void uppercase(Bookcase *bkcs) {
+void check_args(int argc, char **argv) {
 
-    int y, x;
-
-    for (y = 0; y < MAX; y++) {
-        for (x = 0; x < MAX; x++) {
-
-            bkcs->board[y][x] = toupper(bkcs->board[y][x]);
-        }
+    if (argc == 2 || (argc == 3 && strcmp(argv[2], "verbose") == 0)) {
+    } 
+    else {
+        fprintf(stderr, "Please check you are using the correct arguments\n");
+        exit(EXIT_FAILURE);
     }
 }
 
@@ -807,7 +886,6 @@ void print_bookcases(Bookcase *cases, int solution) {
     print_bookcase(cases[0]);
 }
 
-
 void print_bookcase(Bookcase bkcs){
 
     int y, x;
@@ -824,12 +902,88 @@ void print_bookcase(Bookcase bkcs){
     printf("\n");
 }
 
-int find_parents(Bookcase array[MAXIMUM], int solution) {
+bool viable_bookcase(Bookcase *bkcs) {
+
+    int width = bkcs->width;
+
+    if (count_books(bkcs) > width) {
+        return false;
+    }
+    return true;
+}
+
+int count_books(Bookcase *bkcs) {
+
+    int y, x, count = 0;
+    int height = bkcs->height;
+    int width = bkcs-> width;
+    int hist[COLOURS] = {0, 0, 0, 0, 0, 0, 0, 0};
+
+    for (y = 0; y < height; y++) {
+        for (x = 0; x < width; x++) {
+
+            if (is_valid_letter(bkcs->board[y][x])) {
+
+                switch (bkcs->board[y][x]) {
+                    case 'K':
+                        hist[0] += 1;
+                        break;
+                    case 'R':
+                        hist[1] += 1;
+                        break;
+                    case 'G':
+                        hist[2] += 1;
+                        break;
+                    case 'Y':
+                        hist[3] += 1;
+                        break;
+                    case 'B':
+                        hist[4] += 1;
+                        break;
+                    case 'M':
+                        hist[5] += 1;
+                        break;
+                    case 'C':
+                        hist[6] += 1;
+                        break;
+                    case 'W':
+                        hist[7] += 1;
+                        break;
+                    default:
+                        fprintf(stderr, "Invalid character error\n");
+                        exit(EXIT_FAILURE);
+                }
+            }
+        }
+    }
+
+    for (y = 0; y < COLOURS; y++) {
+        if (hist[y] > 0) {
+            count += 1;
+        }
+    }
+    return count;
+}
+
+
+void uppercase(Bookcase *bkcs) {
+
+    int y, x;
+
+    for (y = 0; y < MAX; y++) {
+        for (x = 0; x < MAX; x++) {
+
+            bkcs->board[y][x] = toupper(bkcs->board[y][x]);
+        }
+    }
+}
+
+int find_parents(Bookcase *cases, int solution) {
 
     register int count = 1; 
 
     while (solution != 0) {
-        solution = array[solution].parent;
+        solution = cases[solution].parent;
         count++;
     }
     return count;
@@ -854,6 +1008,7 @@ int find_solution(Bookcase *cases) {
         }
         cases = make_children(cases, parent);
         parent++;
+
     } while (find_happy_bookcase(cases) == NOTHAPPY);
 
     return find_happy_bookcase(cases);
