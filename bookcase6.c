@@ -46,13 +46,13 @@ int find_endshelf(Bookcase *cases);
 Bookcase* make_children(Bookcase *cases, int parent);
 
 /* Function to make book move*/
-void make_move(Bookcase *child, int start, int end, int width); 
+void make_move(Bookcase *child, int start, int end); 
 
 /*Function to get parent*/
 void get_info(Bookcase *child, Bookcase *parent); 
 
 /*Function to check if a move is valid*/
-bool valid_move(Bookcase *bkcs ,int start, int end, int height, int width);
+bool valid_move(Bookcase *bkcs ,int start, int end);
 
 /* Function to assign structure an array number*/
 void fill_number(Bookcase cases[MAXIMUM], int number);
@@ -67,37 +67,34 @@ void test_clean_case(Bookcase *bkcs);
 void *ncalloc(int n, size_t size);
 
 /*Function to remove a book from a shelf*/
-bool remove_book(Bookcase *bkcs, int row, char book, int width);
+bool remove_book(Bookcase *bkcs, int row, char book);
 
 /*Function to add a book to a shelf*/
-bool add_book(Bookcase *bkcs, int row, char book, int width);
+bool add_book(Bookcase *bkcs, int row, char book);
 
 /*Function to find right most book of a row*/
-char find_book(Bookcase *bkcs, int row, int width);
+char find_book(Bookcase *bkcs, int row);
 
 /* Function to test if bookcase is happy*/
-bool is_happy(Bookcase *bkcs, int height, int width);
+bool is_happy(Bookcase *bkcs);
 
 /*Function to check whether first book of each row is different*/
-bool books_in_rows(Bookcase *bkcs, int height);
+bool books_in_rows(Bookcase *bkcs);
 
 /* Function to determine if a row is happy*/
-bool is_row_happy(Bookcase *bkcs, int row, int width); 
+bool is_row_happy(Bookcase *bkcs, int row); 
 
 /* Function to check whether letter is valid*/
 bool is_valid_letter(char a);
 
-/* Function used to clean testing array*/
-void test_clean_shelf(char array[MAX][MAX]);
-
 /*Function to check whether there is space in the row*/
-bool is_space(Bookcase *bkcs, int row, int height, int width);
+bool is_space(Bookcase *bkcs, int row);
 
 /* Function to check whether a shelf is empty*/
-bool is_shelf_empty(Bookcase *bkcs, int height, int width);
+bool is_shelf_empty(Bookcase *bkcs);
 
 /*Function to check whether a row is empty*/
-bool is_row_empty(Bookcase *bkcs, int row, int height, int width);
+bool is_row_empty(Bookcase *bkcs, int row);
 
 /* Function used for testing*/
 bool test_strings(char array[MAX][MAX], int row, char str[10]);
@@ -113,18 +110,7 @@ int main(void) {
 
 void test(void) {
 
-    char test_case[MAX][MAX] = {{'.', '.', '.', '.', '.', '.', '.', '.', '.'},
-                                {'.', '.', '.', '.', '.', '.', '.', '.', '.'},
-                                {'.', '.', '.', '.', '.', '.', '.', '.', '.'},
-                                {'.', '.', '.', '.', '.', '.', '.', '.', '.'},
-                                {'.', '.', '.', '.', '.', '.', '.', '.', '.'},
-                                {'.', '.', '.', '.', '.', '.', '.', '.', '.'},
-                                {'.', '.', '.', '.', '.', '.', '.', '.', '.'},
-                                {'.', '.', '.', '.', '.', '.', '.', '.', '.'},
-                                {'.', '.', '.', '.', '.', '.', '.', '.', '.'}};
-    char test_case2[MAX][MAX];
     int solution, i;
-
     Bookcase *cases;
 
     /* Calloc space for array of structures*/
@@ -133,60 +119,66 @@ void test(void) {
 
     /*Test is_row_empty funtion*/
     test_clean_case(&cases[0]);
+    cases[0].height = MAX;
+    cases[0].width = MAX;
     for (i = 0; i < MAX; i++) {
-        assert(is_row_empty(&cases[0], i, MAX, MAX));
+        assert(is_row_empty(&cases[0], i));
         assert(test_strings(cases[0].board, i, "........."));
     }
 
     cases[0].board[5][1] = 'R';
     cases[0].board[0][1] = 'Y';
     cases[0].board[8][3] = 'R';
-    assert(!is_row_empty(&cases[0], 5, MAX, MAX));
-    assert(!is_row_empty(&cases[0], 0, MAX, MAX));
-    assert(!is_row_empty(&cases[0], 8, MAX, MAX));
-    assert(is_row_empty(&cases[0], 6, MAX, MAX));
+    assert(!is_row_empty(&cases[0], 5));
+    assert(!is_row_empty(&cases[0], 0));
+    assert(!is_row_empty(&cases[0], 8));
+    assert(is_row_empty(&cases[0], 6));
     cases[0].board[5][1] = '.';
     cases[0].board[0][1] = '.';
     cases[0].board[8][3] = '.';
-    assert(is_row_empty(&cases[0], 5, MAX, MAX));
-    assert(is_row_empty(&cases[0], 0, MAX, MAX));
-    assert(is_row_empty(&cases[0], 8, MAX, MAX));
+    assert(is_row_empty(&cases[0], 5));
+    assert(is_row_empty(&cases[0], 0));
+    assert(is_row_empty(&cases[0], 8));
 
     /*Test is_shelf_empty function*/
     test_clean_case(&cases[0]);
-    assert(is_shelf_empty(&cases[0], MAX, MAX));
+    cases[0].height = MAX;
+    cases[0].width = MAX;
+    assert(is_shelf_empty(&cases[0]));
     cases[0].board[0][1] = 'M';
     cases[0].board[2][1] = 'Y';
     cases[0].board[5][3] = 'C';
-    assert(!is_shelf_empty(&cases[0], MAX, MAX));
+    assert(!is_shelf_empty(&cases[0]));
     cases[0].board[2][1] = '.';
     cases[0].board[5][3] = '.';
-    assert(!is_shelf_empty(&cases[0], MAX, MAX));
+    assert(!is_shelf_empty(&cases[0]));
     cases[0].board[0][1] = '.';
-    assert(is_shelf_empty(&cases[0], MAX, MAX));
+    assert(is_shelf_empty(&cases[0]));
 
     /*Test is_space function*/
     test_clean_case(&cases[0]);
+    cases[0].height = MAX;
+    cases[0].width = MAX;
     for (i = 0; i < MAX; i++) {
-        assert(is_space(&cases[0], i, MAX, MAX));
+        assert(is_space(&cases[0], i));
     }
 
     cases[0].board[0][8] = 'R';
     cases[0].board[1][8] = 'R';
     cases[0].board[5][5] = 'R';
     cases[0].board[8][8] = '$';
-    assert(!is_space(&cases[0], 0, MAX, MAX));
-    assert(!is_space(&cases[0], 1, MAX, MAX));
-    assert(is_space(&cases[0], 5, MAX, MAX));
-    assert(!is_space(&cases[0], 8, MAX, MAX));
+    assert(!is_space(&cases[0], 0));
+    assert(!is_space(&cases[0], 1));
+    assert(is_space(&cases[0], 5));
+    assert(!is_space(&cases[0], 8));
     cases[0].board[0][8] = '.';
     cases[0].board[1][8] = '.';
     cases[0].board[5][5] = '.';
     cases[0].board[8][8] = '.';
-    assert(is_space(&cases[0], 0, MAX, MAX));
-    assert(is_space(&cases[0], 1, MAX, MAX));
-    assert(is_space(&cases[0], 5, MAX, MAX));
-    assert(is_space(&cases[0], 8, MAX, MAX));
+    assert(is_space(&cases[0], 0));
+    assert(is_space(&cases[0], 1));
+    assert(is_space(&cases[0], 5));
+    assert(is_space(&cases[0], 8));
 
 
     /* Test is_valid_letter function*/
@@ -199,140 +191,149 @@ void test(void) {
 
     /*Test is_row_happy function*/
     test_clean_case(&cases[0]);
+    cases[0].height = MAX;
+    cases[0].width = MAX;
     for (i = 0; i < MAX; i++) {
-        assert(is_row_happy(&cases[0], i, MAX));
+        assert(is_row_happy(&cases[0], i));
     }
 
     cases[0].board[0][0] = 'R';
     cases[0].board[0][1] = 'R';
     cases[0].board[0][2] = 'R';
-    assert(is_row_happy(&cases[0], 0, MAX));
+    assert(is_row_happy(&cases[0], 0));
     cases[0].board[0][1] = 'Y';
-    assert(!is_row_happy(&cases[0], 0, MAX));
+    assert(!is_row_happy(&cases[0], 0));
     cases[0].board[0][1] = '.';
-    assert(is_row_happy(&cases[0], 0, MAX));
+    assert(is_row_happy(&cases[0], 0));
     cases[0].board[0][0] = '.';
-    assert(is_row_happy(&cases[0], 0, MAX));
+    assert(is_row_happy(&cases[0], 0));
     cases[0].board[0][2] = '.';
-    assert(is_row_happy(&cases[0], 0, MAX));
+    assert(is_row_happy(&cases[0], 0));
     cases[0].board[4][1] = 'B';
     cases[0].board[4][2] = 'R';
-    assert(!is_row_happy(&cases[0], 4, MAX));
+    assert(!is_row_happy(&cases[0], 4));
 
     /*Test books_in_rows function*/
     test_clean_case(&cases[0]);
-    assert(books_in_rows(&cases[0], MAX));
+    cases[0].height = MAX;
+    cases[0].width = MAX;
+    assert(books_in_rows(&cases[0]));
     cases[0].board[0][0] = 'Y';
     cases[0].board[1][0] = 'R';
     cases[0].board[2][0] = 'G';
     cases[0].board[3][0] = 'B';
     cases[0].board[4][0] = 'C';
-    assert(books_in_rows(&cases[0], MAX));
+    assert(books_in_rows(&cases[0]));
     cases[0].board[4][0] = 'Y';
-    assert(!books_in_rows(&cases[0], MAX));
-
+    assert(!books_in_rows(&cases[0]));
 
 
     /*Test if is_happy function*/
     test_clean_case(&cases[0]);
+    cases[0].height = MAX;
+    cases[0].width = MAX;
     cases[0].board[8][8] = 'Y';
     cases[0].board[8][7] = 'Y';
-    assert(is_happy(&cases[0], MAX, MAX));
+    assert(is_happy(&cases[0]));
     cases[0].board[8][6] = 'B';
-    assert(!is_happy(&cases[0], MAX, MAX));
+    assert(!is_happy(&cases[0]));
 
     for (i = 0; i < MAX; i++) {
         cases[0].board[3][i] = 'C';
     }
 
-    assert(!is_happy(&cases[0], MAX, MAX));
+    assert(!is_happy(&cases[0]));
 
     cases[0].board[8][6] = '.';
-    assert(is_happy(&cases[0], MAX, MAX));
+    assert(is_happy(&cases[0]));
 
     for (i = 0; i < MAX; i++) {
         cases[0].board[3][i] = '.';
     }
-    assert(is_happy(&cases[0], MAX, MAX));
+    assert(is_happy(&cases[0]));
 
     for (i = 0; i < MAX; i++) {
         cases[0].board[8][i] = 'Y';
         cases[0].board[2][i] = 'Y';
     }
-    assert(!is_happy(&cases[0], MAX, MAX));
+    assert(!is_happy(&cases[0]));
 
 
     /*Test find_book function*/
     test_clean_case(&cases[0]);
+    cases[0].height = MAX;
+    cases[0].width = MAX;
     cases[0].board[0][1] = 'Y';
-    assert(find_book(&cases[0], 0, MAX) == 'Y');
+    assert(find_book(&cases[0], 0) == 'Y');
     cases[0].board[0][2] = 'C';
-    assert(find_book(&cases[0], 0, MAX) == 'C');
+    assert(find_book(&cases[0], 0) == 'C');
     cases[0].board[0][3] = 'Y';
-    assert(find_book(&cases[0], 0, MAX) != 'C');
-    assert(find_book(&cases[0], 0, MAX) == 'Y');
+    assert(find_book(&cases[0], 0) != 'C');
+    assert(find_book(&cases[0], 0) == 'Y');
 
     for (i = 0; i < MAX; i++) {
         cases[0].board[0][i] = 'B';
     }
-    assert(find_book(&cases[0], 0, MAX) == 'B');
+    assert(find_book(&cases[0], 0) == 'B');
     cases[0].board[0][8] = 'Y';
-    assert(find_book(&cases[0], 0, MAX) == 'Y');
+    assert(find_book(&cases[0], 0) == 'Y');
     for (i = 0; i < MAX; i++) {
         cases[0].board[0][i] = '.';
     }
-    assert(find_book(&cases[0], 0, MAX) == '.');
+    assert(find_book(&cases[0], 0) == '.');
 
     /*Test add book function*/
     test_clean_case(&cases[0]);
-    
-    add_book(&cases[0], 7, 'M', MAX);
+    cases[0].height = MAX;
+    cases[0].width = MAX;
+    add_book(&cases[0], 7, 'M');
     assert(test_strings(cases[0].board, 7, "M........"));
-    add_book(&cases[0], 7, 'C', MAX);
+    add_book(&cases[0], 7, 'C');
     assert(test_strings(cases[0].board, 7, "MC......."));  
 
     /*Test whether fails to add to full book shelf*/
     for (i = 0; i< MAX; i++) {
         cases[0].board[7][i] = 'C';
     }
-    add_book(&cases[0], 7, 'M', MAX);
-    assert(!add_book(&cases[0], 7, 'M', MAX));
+    add_book(&cases[0], 7, 'M');
+    assert(!add_book(&cases[0], 7, 'M'));
     assert(test_strings(cases[0].board, 7, "CCCCCCCCC"));
     
 
     /* Test remove_book function*/
     test_clean_case(&cases[0]);
-
+    cases[0].height = MAX;
+    cases[0].width = MAX;
     cases[0].board[4][4] = 'M';
-    remove_book(&cases[0], 4, 'M', MAX);
+    remove_book(&cases[0], 4, 'M');
     assert(test_strings(cases[0].board, 4, "........."));
 
     for (i = 0; i < MAX; i++) {
         cases[0].board[3][i] = 'G';
     }
-    remove_book(&cases[0], 3, 'G', MAX);
+    remove_book(&cases[0], 3, 'G');
     assert(test_strings(cases[0].board, 3, "GGGGGGGG."));
 
     cases[0].board[3][2] = 'B';
     for (i = 0; i < MAX; i++) {
-        remove_book(&cases[0], 3, 'G', MAX);
+        remove_book(&cases[0], 3, 'G');
     }
     assert(test_strings(cases[0].board, 3, "..B......"));
     
 
-
     /* Test valid_move function*/
     test_clean_case(&cases[0]);
-    assert(!valid_move(&cases[0], 0, 1, MAX, MAX));
+    cases[0].height = MAX;
+    cases[0].width = MAX;
+    assert(!valid_move(&cases[0], 0, 1));
     cases[0].board[0][7] = 'C';
-    assert(valid_move(&cases[0], 0, 1, MAX, MAX));
+    assert(valid_move(&cases[0], 0, 1));
     cases[0].board[1][7] = 'R';
-    assert(valid_move(&cases[0], 0, 1, MAX, MAX));
+    assert(valid_move(&cases[0], 0, 1));
     cases[0].board[1][8] = 'R';
-    assert(!valid_move(&cases[0], 0, 1, MAX, MAX));
-    assert(!valid_move(&cases[0], 7, 7, MAX, MAX));
+    assert(!valid_move(&cases[0], 0, 1));
+    assert(!valid_move(&cases[0], 7, 7));
     
-
  
 
     /*Test test_clean_case function*/
@@ -358,12 +359,14 @@ void test(void) {
 
     /* Test make_move function*/
     test_clean_case(&cases[0]);
+    cases[0].height = MAX;
+    cases[0].width = MAX;
     cases[0].board[0][1] = 'C';
     cases[0].board[0][2] = 'Y';
-    make_move(&cases[0], 0, 1, MAX);
+    make_move(&cases[0], 0, 1);
     assert(cases[0].board[1][0] == 'Y');
     assert(cases[0].board[0][2] == '.');
-    make_move(&cases[0], 0, 1, MAX);
+    make_move(&cases[0], 0, 1);
     assert(cases[0].board[1][1] == 'C');
     assert(cases[0].board[0][1] == '.');
 
@@ -371,7 +374,7 @@ void test(void) {
     for (i = 0; i < MAX; i++) {
         cases[0].board[4][i] = 'Y';
     }
-    make_move(&cases[0], 5, 4, MAX);
+    make_move(&cases[0], 5, 4);
     assert(cases[0].board[5][8] == 'R');
     assert(cases[0].board[4][8] == 'Y');
 
@@ -776,12 +779,10 @@ int find_solution(Bookcase *cases) {
 int find_happy_bookcase(Bookcase *bkcs) {
 
     int i = 0;
-    int height = bkcs[0].height;
-    int width  = bkcs[0].width;
 
     while (bkcs[i].height != 0) {
 
-        if (is_happy(&bkcs[i], height, width)) {
+        if (is_happy(&bkcs[i])) {
                 return i;
             }      
         i++;
@@ -821,19 +822,18 @@ int find_endshelf(Bookcase *cases) {
 Bookcase* make_children(Bookcase *cases, int parent) {
 
     int height = cases[parent].height;
-    int width = cases[parent].width;
     int endshelf = find_endshelf(cases);
     int y, x;
 
     for (y = 0; y < height; y++) {
         for (x = 0; x < height; x++) {
 
-            if (valid_move(&cases[parent], y, x, height, width)) {
+            if (valid_move(&cases[parent], y, x)) {
 
                 cases = check_shelf(cases, endshelf);
                 copy_bookcase(&cases[endshelf], &cases[parent]);
-                make_move(&cases[endshelf], y, x, width);
                 get_info(&cases[endshelf], &cases[parent]);
+                make_move(&cases[endshelf], y, x);
                 endshelf++;
             }
         }
@@ -841,12 +841,12 @@ Bookcase* make_children(Bookcase *cases, int parent) {
     return cases;
 }
 
-void make_move(Bookcase *child, int start, int end, int width) {
+void make_move(Bookcase *child, int start, int end) {
 
-    char book = find_book(child, start, width);
+    char book = find_book(child, start);
 
-    if (add_book(child, end, book, width)) {
-        remove_book(child, start, book, width);
+    if (add_book(child, end, book)) {
+        remove_book(child, start, book);
     } 
 }
 
@@ -906,25 +906,26 @@ void *ncalloc(int n, size_t size) {
 }
 
 
-bool valid_move(Bookcase *bkcs ,int start, int end, int height, int width) {
+bool valid_move(Bookcase *bkcs ,int start, int end) {
 
     if (start == end) {
         return false;
     }
 
-    if (is_row_empty(bkcs, start, height, width)) {
+    if (is_row_empty(bkcs, start)) {
         return false;
     }
-    if (!is_space(bkcs, end, height, width)){
+    if (!is_space(bkcs, end)){
         return false;
     }   
 
     return true;
 }
 
-bool remove_book(Bookcase *bkcs, int row, char book, int width) {
+bool remove_book(Bookcase *bkcs, int row, char book) {
 
     int i;
+    int width = bkcs->width;
 
     for (i = width-1; i >= 0; i--) {
         if (bkcs->board[row][i] == book) {
@@ -936,9 +937,10 @@ bool remove_book(Bookcase *bkcs, int row, char book, int width) {
     return false;
 }
 
-bool add_book(Bookcase *bkcs, int row, char book, int width){
+bool add_book(Bookcase *bkcs, int row, char book){
 
     int i;
+    int width = bkcs->width;
 
     for (i = 0; i < width; i++) {
         if (bkcs->board[row][i] == '.') {
@@ -950,10 +952,11 @@ bool add_book(Bookcase *bkcs, int row, char book, int width){
     return false;
 }
 
-char find_book(Bookcase *bkcs, int row, int width) {
+char find_book(Bookcase *bkcs, int row) {
 
     char book = '.'; 
     int i;
+    int width = bkcs->width;
 
     for (i = 0; i < width; i++) {
         if (is_valid_letter(bkcs->board[row][i])) {
@@ -964,31 +967,33 @@ char find_book(Bookcase *bkcs, int row, int width) {
 }
 
 
-bool is_happy(Bookcase *bkcs, int height, int width) {
+bool is_happy(Bookcase *bkcs) {
 
     int y = 0;
+    int height = bkcs->height;
 
     while (y != height) {
-        if (!is_row_happy(bkcs, y, width)) {
+        if (!is_row_happy(bkcs, y)) {
             return false;
         }
         y++;
     }
 
-    if (!books_in_rows(bkcs, height)) {
+    if (!books_in_rows(bkcs)) {
         return false;
     }
 
-    if (is_shelf_empty(bkcs, height, width)){
+    if (is_shelf_empty(bkcs)){
         return false;
     }
 
     return true;
 }
 
-bool books_in_rows(Bookcase *bkcs, int height) {
+bool books_in_rows(Bookcase *bkcs) {
 
     int x, y;
+    int height = bkcs->height;
 
     for (y = 0; y < height; y++) {
         for (x = y+1; x < height; x++) {
@@ -1004,9 +1009,10 @@ bool books_in_rows(Bookcase *bkcs, int height) {
     return true;
 }
 
-bool is_row_happy(Bookcase *bkcs, int row, int width) {
+bool is_row_happy(Bookcase *bkcs, int row) {
 
     int i, j;
+    int width = bkcs->width;
 
     for (i = 0; i < width; i++) {
         for (j = i+1; j < width; j++) {
@@ -1042,19 +1048,10 @@ bool is_valid_letter(char a) {
     }
 }
 
-void test_clean_shelf(char array[MAX][MAX]){
+bool is_space(Bookcase *bkcs, int row) {
 
-    int y, x;
-
-    for (y = 0; y < MAX; y++) {
-        for (x = 0; x < MAX; x++) {
-
-            array[y][x] = '.';
-        }
-    }
-}
-
-bool is_space(Bookcase *bkcs, int row, int height, int width) {
+    int height = bkcs->height;
+    int width = bkcs->width;
 
     if (row >= height || row < 0) {
         fprintf(stderr, "Row invalid, please pick another\n");
@@ -1067,20 +1064,24 @@ bool is_space(Bookcase *bkcs, int row, int height, int width) {
     return false;
 }
 
-bool is_shelf_empty(Bookcase *bkcs, int height, int width) {
+bool is_shelf_empty(Bookcase *bkcs) {
 
     int x;
+    int height = bkcs->height;
+
     for (x = 0; x < height; x++) {
-        if (!is_row_empty(bkcs, x, height, width)) {
+        if (!is_row_empty(bkcs, x)) {
             return false;
         }
     }
     return true;
 }
 
-bool is_row_empty(Bookcase *bkcs, int row, int height, int width) {
+bool is_row_empty(Bookcase *bkcs, int row) {
 
     int x;
+    int height = bkcs->height;
+    int width = bkcs->width;
 
     if (row >= height || row < 0) {
         fprintf(stderr, "Row invalid, please pick another\n");
