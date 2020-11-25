@@ -3,10 +3,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include "neillsimplescreen.h"
 
 #define MAX 9
-#define MAXIMUM 999999
-#define CAP 99999999
+#define MAXIMUM 9999999
+#define CAP 999999998
 #define SCALEFACTOR 2
 #define COLOURS 8
 #define BLACK 'K'
@@ -22,12 +23,15 @@
 enum bool {false, true};
 typedef enum bool bool;
 
+enum axis {y, x, height, width, row};
+typedef enum axis axis;
+
 struct bookcase {
     char board[MAX][MAX];
     int parent;
     int number;
-    int height;
-    int width;
+    axis height;
+    axis width;
 };
 
 typedef struct bookcase Bookcase;
@@ -38,22 +42,26 @@ void check_args(int argc, char **argv);
 /* Function to read in a file*/
 void readfile(Bookcase *bkcs, char **argv); 
 
-/* Function to print out the parent bookcases*/
+/* Function to print out parent bookcases*/
 void print_bookcases(Bookcase *cases, int solution);
 
 /*Function to print a bookcase*/
 void print_bookcase(Bookcase bkcs);
 
+/*Function to check height and width \
+are within bookcase bounds*/
+bool check_parameters(Bookcase *bkcs);
+
 /*Function to check whether a bookcase is full*/
 bool full_bookcase(Bookcase *bkcs);
 
-/*Function to check if bookcase has more books than rows*/ 
+/*Function to check if a bookcase has more books than rows*/ 
 bool viable_bookcase(Bookcase *bkcs);
 
-/*Function to count the number of book colours in a case*/
+/*Function to count the number books in a bookcase*/
 int count_books(Bookcase *bkcs);
 
-/* Function to change letters in file to uppercase*/
+/* Function to change book letters in a bookcase to uppercase*/
 void uppercase(Bookcase *bkcs); 
 
 /*Function to find the number of bookcases that \
@@ -64,42 +72,41 @@ int find_parents(Bookcase *cases, int solution);
 a happy bookcase is found*/
 int find_solution(Bookcase *cases);
 
+/*Function to realloc new space if shelf runs out of room*/
+Bookcase* check_space(Bookcase *cases);
+
 /*Function to find the endshelf in array of structures*/
 int find_endshelf(Bookcase *cases);
 
 /*Function to make children bookcases*/
 int make_children(Bookcase *cases, int parent);
 
-/*Function to realloc new space if \
-array is about to run of space*/
-Bookcase* check_space(Bookcase *cases);
-
 /* Function to make book move*/
 void make_move(Bookcase *child, int start, int end); 
 
-/*Function to get parent*/
+/*Function to get parent, height and width info*/
 void get_info(Bookcase *child, Bookcase *parent); 
 
 /*Function to check if a move is valid*/
 bool valid_move(Bookcase *bkcs ,int start, int end);
 
-/* Function to assign structure an array number*/
+/* Function to assign each structure an array number*/
 void fill_number(Bookcase *cases, int number);
 
 /* Function to map parent bookcase onto child bookcase*/
 void copy_bookcase(Bookcase *child, Bookcase *parent); 
 
-/* Testing function to fill parent bookcase*/
+/* Testing function to empty bookcase*/
 void test_clean_case(Bookcase *bkcs);
 
 /* Function to check whether calloc has freed up space*/
 void *ncalloc(int n, size_t size);
 
-/*Function to remove a book from a shelf*/
-bool remove_book(Bookcase *bkcs, int row, char book);
+/*Function to remove a book from a row*/
+bool remove_book(Bookcase *bkcs, axis row, char book);
 
-/*Function to add a book to a shelf*/
-bool add_book(Bookcase *bkcs, int row, char book);
+/*Function to add a book to a row*/
+bool add_book(Bookcase *bkcs, axis row, char book);
 
 /*Function to find right most book of a row*/
 char find_book(Bookcase *bkcs, int row);
@@ -112,19 +119,16 @@ book of each row is different*/
 bool books_in_rows(Bookcase *bkcs);
 
 /* Function to determine if a row is happy*/
-bool is_row_happy(Bookcase *bkcs, int row); 
+bool is_row_happy(Bookcase *bkcs, axis row); 
 
-/* Function to check whether letter is valid*/
-bool is_valid_letter(char a);
+/* Function to check whether book is valid*/
+bool is_valid_book(char book);
 
 /*Function to check whether there is space in the row*/
-bool is_space(Bookcase *bkcs, int row);
-
-/* Function to check whether a shelf is empty*/
-bool is_shelf_empty(Bookcase *bkcs);
+bool is_space(Bookcase *bkcs, axis row);
 
 /*Function to check whether a row is empty*/
-bool is_row_empty(Bookcase *bkcs, int row);
+bool is_row_empty(Bookcase *bkcs, axis row);
 
 /* Function used for testing*/
 bool test_strings(Bookcase *bkcs,\
@@ -144,6 +148,11 @@ int main(int argc, char **argv) {
     fill_number(cases, MAXIMUM);
     readfile(&cases[0], argv);
     uppercase(&cases[0]);
+
+    if (!check_parameters(&cases[0])) {
+        fprintf(stderr, "Please check bookcase height and width\n");
+        exit(EXIT_FAILURE);
+    }
 
     if (!viable_bookcase(&cases[0]) ||\
      full_bookcase(&cases[0])) {
@@ -227,13 +236,40 @@ void print_bookcases(Bookcase *cases, int solution) {
 
 void print_bookcase(Bookcase bkcs){
 
-    int y, x;
-    int height = bkcs.height;
-    int width = bkcs.width;
+    axis y, x;
+    axis height = bkcs.height;
+    axis width = bkcs.width;
 
     for (y = 0; y < height; y++) {
         printf("\n");
         for (x = 0; x < width; x++) {
+
+            if (bkcs.board[y][x] == BLACK){
+                neillfgcol(black);
+            }
+            else if (bkcs.board[y][x] == RED) {
+                neillfgcol(red);
+            }
+            else if (bkcs.board[y][x] == GREEN) {
+                neillfgcol(green);
+            }
+            else if (bkcs.board[y][x] == YELLOW) {
+                neillfgcol(yellow);
+            }
+            else if (bkcs.board[y][x] == BLUE) {
+                neillfgcol(blue);
+            }
+            else if (bkcs.board[y][x] == MAGENTA) {
+                neillfgcol(magenta);
+            }
+            else if (bkcs.board[y][x] == CYAN) {
+                neillfgcol(cyan);
+            }
+            else if (bkcs.board[y][x] == WHITE) {
+                neillfgcol(white);
+            }
+            else {
+            }
 
             printf("%c", bkcs.board[y][x]);
         }
@@ -241,11 +277,23 @@ void print_bookcase(Bookcase bkcs){
     printf("\n");
 }
 
+bool check_parameters(Bookcase *bkcs) {
+
+    axis height = bkcs->height;
+    axis width = bkcs->width;
+
+    if (height <= 0 || height > MAX || \
+    width <= 0 || width > MAX) {
+        return false;
+    }
+    return true;
+}
+
 bool full_bookcase(Bookcase *bkcs) {
 
-    int height = bkcs->height;
-    int width  = bkcs->width;
-    int y, x;
+    axis height = bkcs->height;
+    axis width  = bkcs->width;
+    axis y, x;
 
     for (y = 0; y < height; y++) {
         for (x = 0; x < width; x++) {
@@ -270,15 +318,16 @@ bool viable_bookcase(Bookcase *bkcs) {
 
 int count_books(Bookcase *bkcs) {
 
-    int y, x, count = 0;
-    int height = bkcs->height;
-    int width = bkcs-> width;
+    axis y, x;
+    axis height = bkcs->height;
+    axis width = bkcs-> width;
     int hist[COLOURS] = {0, 0, 0, 0, 0, 0, 0, 0};
+    register int count = 0;
 
     for (y = 0; y < height; y++) {
         for (x = 0; x < width; x++) {
 
-            if (is_valid_letter(bkcs->board[y][x])) {
+            if (is_valid_book(bkcs->board[y][x])) {
 
                 switch (bkcs->board[y][x]) {
                     case BLACK:
@@ -322,10 +371,9 @@ int count_books(Bookcase *bkcs) {
     return count;
 }
 
-
 void uppercase(Bookcase *bkcs) {
 
-    int y, x;
+    axis y, x;
 
     for (y = 0; y < MAX; y++) {
         for (x = 0; x < MAX; x++) {
@@ -334,7 +382,6 @@ void uppercase(Bookcase *bkcs) {
         }
     }
 }
-
 
 int find_parents(Bookcase *cases, int solution) {
 
@@ -357,11 +404,13 @@ int find_solution(Bookcase *cases) {
     }
 
     do {
+        cases = check_space(cases);
         endshelf = find_endshelf(cases);
+
         /*No Solution Condition*/
-        if (endshelf > CAP) {
-            printf("No Solution?\n");
-            return 0;
+        if (endshelf >= CAP) {
+            fprintf(stderr, "No Solution?\n");
+            exit(EXIT_FAILURE);
         }
         solution = make_children(cases, parent);
         parent++;
@@ -373,9 +422,9 @@ int find_solution(Bookcase *cases) {
 
 int make_children(Bookcase *cases, int parent) {
 
-    int height = cases[parent].height;
+    axis height = cases[parent].height;
     int endshelf = find_endshelf(cases);
-    int y, x;
+    axis y, x;
 
     for (y = 0; y < height; y++) {
         for (x = 0; x < height; x++) {
@@ -420,7 +469,6 @@ Bookcase* check_space(Bookcase *cases) {
     return cases;
 }
 
-
 int find_endshelf(Bookcase *cases) {
 
     int endshelf = cases[0].height; 
@@ -460,7 +508,7 @@ void fill_number(Bookcase *cases, int number) {
 
 void copy_bookcase(Bookcase *child, Bookcase *parent) {
 
-    int y, x;
+    axis y, x;
 
     for (y = 0; y < MAX; y++) {
         for (x = 0; x < MAX; x++) {
@@ -472,7 +520,7 @@ void copy_bookcase(Bookcase *child, Bookcase *parent) {
 
 void test_clean_case(Bookcase *bkcs) {
 
-    int y, x;
+    axis y, x;
 
     for (y = 0; y < MAX; y++) {
         for (x = 0; x < MAX; x++) {
@@ -496,7 +544,6 @@ void *ncalloc(int n, size_t size) {
     return v;
 }
 
-
 bool valid_move(Bookcase *bkcs ,int start, int end) {
 
     if (start == end) {
@@ -513,7 +560,7 @@ bool valid_move(Bookcase *bkcs ,int start, int end) {
     return true;
 }
 
-bool remove_book(Bookcase *bkcs, int row, char book) {
+bool remove_book(Bookcase *bkcs, axis row, char book) {
 
     int i;
     int width = bkcs->width;
@@ -528,7 +575,7 @@ bool remove_book(Bookcase *bkcs, int row, char book) {
     return false;
 }
 
-bool add_book(Bookcase *bkcs, int row, char book){
+bool add_book(Bookcase *bkcs, axis row, char book){
 
     int i;
     int width = bkcs->width;
@@ -550,18 +597,17 @@ char find_book(Bookcase *bkcs, int row) {
     int width = bkcs->width;
 
     for (i = 0; i < width; i++) {
-        if (is_valid_letter(bkcs->board[row][i])) {
+        if (is_valid_book(bkcs->board[row][i])) {
             book = bkcs->board[row][i];
         }
     } 
     return book;
 }
 
-
 bool is_happy(Bookcase *bkcs) {
 
-    int y = 0;
-    int height = bkcs->height;
+    axis y = 0;
+    axis height = bkcs->height;
 
     while (y != height) {
         if (!is_row_happy(bkcs, y)) {
@@ -574,23 +620,19 @@ bool is_happy(Bookcase *bkcs) {
         return false;
     }
 
-    if (is_shelf_empty(bkcs)){
-        return false;
-    }
-
     return true;
 }
 
 bool books_in_rows(Bookcase *bkcs) {
 
-    int x, y;
-    int height = bkcs->height;
+    axis x, y;
+    axis height = bkcs->height;
 
     for (y = 0; y < height; y++) {
         for (x = y+1; x < height; x++) {
 
-            if (is_valid_letter(bkcs->board[y][0]) \
-            && is_valid_letter(bkcs->board[x][0])) {
+            if (is_valid_book(bkcs->board[y][0]) \
+            && is_valid_book(bkcs->board[x][0])) {
 
                 if (bkcs->board[y][0] == bkcs->board[x][0]) {
                     return false;
@@ -601,19 +643,19 @@ bool books_in_rows(Bookcase *bkcs) {
     return true;
 }
 
-bool is_row_happy(Bookcase *bkcs, int row) {
+bool is_row_happy(Bookcase *bkcs, axis row) {
 
-    int i, j;
-    int width = bkcs->width;
+    axis y, x;
+    axis width = bkcs->width;
 
-    for (i = 0; i < width; i++) {
-        for (j = i+1; j < width; j++) {
+    for (y = 0; y < width; y++) {
+        for (x = y+1; x < width; x++) {
 
-            if (is_valid_letter(bkcs->board[row][i]) && \
-            is_valid_letter(bkcs->board[row][j])) { 
+            if (is_valid_book(bkcs->board[row][y]) && \
+            is_valid_book(bkcs->board[row][x])) { 
 
-                if (bkcs->board[row][i] != \
-                bkcs->board[row][j]) {
+                if (bkcs->board[row][y] != \
+                bkcs->board[row][x]) {
                 return false;
                 }
             }
@@ -622,9 +664,9 @@ bool is_row_happy(Bookcase *bkcs, int row) {
     return true;
 }
 
-bool is_valid_letter(char a) {
+bool is_valid_book(char book) {
 
-    switch (a) {
+    switch (book) {
         case BLACK:
         case RED:
         case GREEN:
@@ -643,10 +685,10 @@ bool is_valid_letter(char a) {
     }
 }
 
-bool is_space(Bookcase *bkcs, int row) {
+bool is_space(Bookcase *bkcs, axis row) {
 
-    int height = bkcs->height;
-    int width = bkcs->width;
+    axis height = bkcs->height;
+    axis width = bkcs->width;
 
     if (row >= height || row < 0) {
         fprintf(stderr, "Row invalid, \
@@ -660,24 +702,11 @@ bool is_space(Bookcase *bkcs, int row) {
     return false;
 }
 
-bool is_shelf_empty(Bookcase *bkcs) {
+bool is_row_empty(Bookcase *bkcs, axis row) {
 
-    int x;
-    int height = bkcs->height;
-
-    for (x = 0; x < height; x++) {
-        if (!is_row_empty(bkcs, x)) {
-            return false;
-        }
-    }
-    return true;
-}
-
-bool is_row_empty(Bookcase *bkcs, int row) {
-
-    int x;
-    int height = bkcs->height;
-    int width = bkcs->width;
+    axis x;
+    axis height = bkcs->height;
+    axis width = bkcs->width;
 
     if (row >= height || row < 0) {
         fprintf(stderr, "Row invalid, \
@@ -742,21 +771,6 @@ void test(void) {
     assert(is_row_empty(&cases[0], 0));
     assert(is_row_empty(&cases[0], 8));
 
-    /*Test is_shelf_empty function*/
-    test_clean_case(&cases[0]);
-    cases[0].height = MAX;
-    cases[0].width = MAX;
-    assert(is_shelf_empty(&cases[0]));
-    cases[0].board[0][1] = 'M';
-    cases[0].board[2][1] = 'Y';
-    cases[0].board[5][3] = 'C';
-    assert(!is_shelf_empty(&cases[0]));
-    cases[0].board[2][1] = '.';
-    cases[0].board[5][3] = '.';
-    assert(!is_shelf_empty(&cases[0]));
-    cases[0].board[0][1] = '.';
-    assert(is_shelf_empty(&cases[0]));
-
     /*Test is_space function*/
     test_clean_case(&cases[0]);
     cases[0].height = MAX;
@@ -782,14 +796,13 @@ void test(void) {
     assert(is_space(&cases[0], 5));
     assert(is_space(&cases[0], 8));
 
+    /* Test is_valid_book function*/
+    assert(is_valid_book('B'));
+    assert(is_valid_book('K'));
+    assert(is_valid_book('C'));
+    assert(is_valid_book('W'));
 
-    /* Test is_valid_letter function*/
-    assert(is_valid_letter('B'));
-    assert(is_valid_letter('K'));
-    assert(is_valid_letter('C'));
-    assert(is_valid_letter('W'));
-
-    assert(!is_valid_letter('.'));
+    assert(!is_valid_book('.'));
 
     /*Test is_row_happy function*/
     test_clean_case(&cases[0]);
@@ -829,7 +842,6 @@ void test(void) {
     cases[0].board[4][0] = 'Y';
     assert(!books_in_rows(&cases[0]));
 
-
     /*Test if is_happy function*/
     test_clean_case(&cases[0]);
     cases[0].height = MAX;
@@ -859,7 +871,6 @@ void test(void) {
         cases[0].board[2][i] = 'Y';
     }
     assert(!is_happy(&cases[0]));
-
 
     /*Test find_book function*/
     test_clean_case(&cases[0]);
@@ -1004,7 +1015,6 @@ void test(void) {
     assert(cases[7].width  == 2);
     assert(cases[7].height == 2);
 
-
     /*Test find_endshelf function*/
     test_clean_case(&cases[0]);
     assert(find_endshelf(cases) == 0);
@@ -1021,7 +1031,6 @@ void test(void) {
     }
     assert(find_endshelf(cases) == 923);
 
-
     /*Test check_space function*/
     test_clean_case(&cases[MAXIMUM -8]);
     for (i = 0; i < MAXIMUM-2; i++) {
@@ -1035,7 +1044,6 @@ void test(void) {
     cases[MAXIMUM + 2].board[3][2] = 'Y';
     cases[MAXIMUM + 2].board[4][7] = 'W';
     cases[MAXIMUM + 2].board[3][2] = 'C';
-
 
     /*Test make_children function*/
     for (i = 0; i < 478; i++) {
@@ -1361,6 +1369,17 @@ void test(void) {
     cases[0].board[2][1] = 'M';
     cases[0].board[2][2] = 'C';
     assert(full_bookcase(&cases[0]));
+
+    /*Test check_parameters function*/
+
+    cases[0].height = MAX;
+    cases[0].width = MAX;
+    assert(check_parameters(&cases[0]));
+    cases[0].height = 10;
+    assert(!check_parameters(&cases[0]));
+    cases[0].height = 5;
+    cases[0].width = 0;
+    assert(!check_parameters(&cases[0]));
 
     free(cases);
 }
